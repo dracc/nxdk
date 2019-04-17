@@ -1,6 +1,8 @@
 #ifndef __WINDEF_H__
 #define __WINDEF_H__
 
+#define MAX_PATH 260
+
 typedef void VOID, *PVOID, *LPVOID;
 typedef PVOID HANDLE, *PHANDLE;
 
