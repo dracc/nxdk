@@ -99,7 +99,7 @@ void main(void)
 	debugPrint("Gateway..... %s\n", ip4addr_ntoa(netif_ip4_gw(g_pnetif)));
 	debugPrint("\n");
 
-	http_server_netconn_init();
+	http_server_bsd_init();
 	while (1) NtYieldExecution();
 	Pktdrv_Quit();
 	return;
