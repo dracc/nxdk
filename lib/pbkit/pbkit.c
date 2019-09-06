@@ -2234,7 +2234,7 @@ void pb_stop_log(void)
 #endif
 
 
-void pb_end(DWORD *pEnd)
+DWORD *pb_end(DWORD *pEnd)
 {
     DWORD           TimeStamp1;
     DWORD           TimeStamp2;
@@ -2260,6 +2260,7 @@ void pb_end(DWORD *pEnd)
 #endif
 
 #ifdef DBG
+    if (pEnd!=pb_PushNext) debugPrint("pb_end: input pointer invalid or not following previous write addresses\n");
     if (pb_BeginEndPair==0) debugPrint("pb_end without a pb_start\n");
     pb_BeginEndPair=0;
 #endif
@@ -2287,6 +2288,7 @@ void pb_end(DWORD *pEnd)
             }
         }
     }
+    return NULL;
 }
 
 
