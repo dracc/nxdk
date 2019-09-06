@@ -147,27 +147,27 @@ void main(void)
 
         /* Enable texture stage 0 */
         /* FIXME: Use constants instead of the hardcoded values below */
-        p=pb_begin();
-        pb_push2(p,NV20_TCL_PRIMITIVE_3D_TX_OFFSET(0),(DWORD)texture.addr & 0x03ffffff,0x0001122a); p+=3; //set stage 0 texture address & format
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_NPOT_PITCH(0),texture.pitch<<16); p+=2; //set stage 0 texture pitch (pitch<<16)
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_NPOT_SIZE(0),(texture.width<<16)|texture.height); p+=2; //set stage 0 texture width & height ((witdh<<16)|height)
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_WRAP(0),0x00030303); p+=2;//set stage 0 texture modes (0x0W0V0U wrapping: 1=wrap 2=mirror 3=clamp 4=border 5=clamp to edge)
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_ENABLE(0),0x4003ffc0); p+=2; //set stage 0 texture enable flags
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(0),0x04074000); p+=2; //set stage 0 texture filters (AA!)
-        pb_end(p);
+        p = pb_begin();
+        p = pb_push2(p,NV20_TCL_PRIMITIVE_3D_TX_OFFSET(0),(DWORD)texture.addr & 0x03ffffff,0x0001122a); //set stage 0 texture address & format
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_NPOT_PITCH(0),texture.pitch<<16); //set stage 0 texture pitch (pitch<<16)
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_NPOT_SIZE(0),(texture.width<<16)|texture.height); //set stage 0 texture width & height ((witdh<<16)|height)
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_WRAP(0),0x00030303);//set stage 0 texture modes (0x0W0V0U wrapping: 1=wrap 2=mirror 3=clamp 4=border 5=clamp to edge)
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_ENABLE(0),0x4003ffc0); //set stage 0 texture enable flags
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(0),0x04074000); //set stage 0 texture filters (AA!)
+        p = pb_end(p);
 
         /* Disable other texture stages */
-        p=pb_begin();
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_ENABLE(1),0x0003ffc0); p+=2;//set stage 1 texture enable flags (bit30 disabled)
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_ENABLE(2),0x0003ffc0); p+=2;//set stage 2 texture enable flags (bit30 disabled)
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_ENABLE(3),0x0003ffc0); p+=2;//set stage 3 texture enable flags (bit30 disabled)
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_WRAP(1),0x00030303); p+=2;//set stage 1 texture modes (0x0W0V0U wrapping: 1=wrap 2=mirror 3=clamp 4=border 5=clamp to edge)
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_WRAP(2),0x00030303); p+=2;//set stage 2 texture modes (0x0W0V0U wrapping: 1=wrap 2=mirror 3=clamp 4=border 5=clamp to edge)
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_WRAP(3),0x00030303); p+=2;//set stage 3 texture modes (0x0W0V0U wrapping: 1=wrap 2=mirror 3=clamp 4=border 5=clamp to edge)
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(1),0x02022000); p+=2;//set stage 1 texture filters (no AA, stage not even used)
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(2),0x02022000); p+=2;//set stage 2 texture filters (no AA, stage not even used)
-        pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(3),0x02022000); p+=2;//set stage 3 texture filters (no AA, stage not even used)
-        pb_end(p);
+        p = pb_begin();
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_ENABLE(1),0x0003ffc0);//set stage 1 texture enable flags (bit30 disabled)
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_ENABLE(2),0x0003ffc0);//set stage 2 texture enable flags (bit30 disabled)
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_ENABLE(3),0x0003ffc0);//set stage 3 texture enable flags (bit30 disabled)
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_WRAP(1),0x00030303);//set stage 1 texture modes (0x0W0V0U wrapping: 1=wrap 2=mirror 3=clamp 4=border 5=clamp to edge)
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_WRAP(2),0x00030303);//set stage 2 texture modes (0x0W0V0U wrapping: 1=wrap 2=mirror 3=clamp 4=border 5=clamp to edge)
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_WRAP(3),0x00030303);//set stage 3 texture modes (0x0W0V0U wrapping: 1=wrap 2=mirror 3=clamp 4=border 5=clamp to edge)
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(1),0x02022000);//set stage 1 texture filters (no AA, stage not even used)
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(2),0x02022000);//set stage 2 texture filters (no AA, stage not even used)
+        p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(3),0x02022000);//set stage 3 texture filters (no AA, stage not even used)
+        p = pb_end(p);
 
         /* Send shader constants
          *
@@ -178,7 +178,7 @@ void main(void)
         p = pb_begin();
 
         /* Set shader constants cursor at C0 */
-        pb_push1(p, NV20_TCL_PRIMITIVE_3D_VP_UPLOAD_CONST_ID, 96); p+=2;
+        p = pb_push1(p, NV20_TCL_PRIMITIVE_3D_VP_UPLOAD_CONST_ID, 96);
 
         /* Send the model matrix */
         pb_push(p++, NV20_TCL_PRIMITIVE_3D_VP_UPLOAD_CONST_X, 16);
@@ -218,7 +218,7 @@ void main(void)
         for(i = 0; i < 16; i++) {
             *(p++) = 2;
         }
-        pb_end(p);
+        p = pb_end(p);
 
         /*
          * Setup vertex attributes
@@ -302,20 +302,17 @@ static void init_shader(void)
     p = pb_begin();
 
     /* Set run address of shader */
-    pb_push(p++, NV097_SET_TRANSFORM_PROGRAM_START, 1); *(p++)=0;
+    p = pb_push1(p, NV097_SET_TRANSFORM_PROGRAM_START, 0);
 
     /* Set execution mode */
-    pb_push1(p, NV097_SET_TRANSFORM_EXECUTION_MODE,
-        MASK(NV097_SET_TRANSFORM_EXECUTION_MODE_MODE, NV097_SET_TRANSFORM_EXECUTION_MODE_MODE_PROGRAM)
-        | MASK(NV097_SET_TRANSFORM_EXECUTION_MODE_RANGE_MODE, NV097_SET_TRANSFORM_EXECUTION_MODE_RANGE_MODE_PRIV));
-    p += 2;
+    p = pb_push1(p, NV097_SET_TRANSFORM_EXECUTION_MODE,
+                 MASK(NV097_SET_TRANSFORM_EXECUTION_MODE_MODE, NV097_SET_TRANSFORM_EXECUTION_MODE_MODE_PROGRAM)
+                 | MASK(NV097_SET_TRANSFORM_EXECUTION_MODE_RANGE_MODE, NV097_SET_TRANSFORM_EXECUTION_MODE_RANGE_MODE_PRIV));
 
-    pb_push1(p, NV097_SET_TRANSFORM_PROGRAM_CXT_WRITE_EN, 0);
-    p += 2;
+    p = pb_push1(p, NV097_SET_TRANSFORM_PROGRAM_CXT_WRITE_EN, 0);
 
     /* Set cursor and begin copying program */
-    pb_push1(p, NV097_SET_TRANSFORM_PROGRAM_LOAD, 0);
-    p += 2;
+    p = pb_push1(p, NV097_SET_TRANSFORM_PROGRAM_LOAD, 0);
 
     for (i=0; i<sizeof(vs_program)/8; i++) {
         pb_push(p++, NV097_SET_TRANSFORM_PROGRAM, 4);
@@ -323,12 +320,12 @@ static void init_shader(void)
         p+=4;
     }
 
-    pb_end(p);
+    p = pb_end(p);
 
     /* Setup fragment shader */
     p = pb_begin();
     #include "ps.inl"
-    pb_end(p);
+    p = pb_end(p);
 }
 
 /* Load the textures we will render with */
@@ -345,14 +342,12 @@ static void init_textures(void)
 static void set_attrib_pointer(unsigned int index, unsigned int format, unsigned int size, unsigned int stride, const void* data)
 {
     uint32_t *p = pb_begin();
-    pb_push1(p, NV097_SET_VERTEX_DATA_ARRAY_FORMAT + index*4,
+    p = pb_push1(p, NV097_SET_VERTEX_DATA_ARRAY_FORMAT + index*4,
         MASK(NV097_SET_VERTEX_DATA_ARRAY_FORMAT_TYPE, format) | \
         MASK(NV097_SET_VERTEX_DATA_ARRAY_FORMAT_SIZE, size) | \
         MASK(NV097_SET_VERTEX_DATA_ARRAY_FORMAT_STRIDE, stride));
-    p += 2;
-    pb_push1(p, NV097_SET_VERTEX_DATA_ARRAY_OFFSET + index*4, (uint32_t)data & 0x03ffffff);
-    p += 2;
-    pb_end(p);
+    p = pb_push1(p, NV097_SET_VERTEX_DATA_ARRAY_OFFSET + index*4, (uint32_t)data & 0x03ffffff);
+    p = pb_end(p);
 }
 
 /* Draw vertices using the index method */
@@ -371,7 +366,7 @@ static void draw_indices(void)
 
         /* Begin by stating what these indices are and how many we'll send */
         p = pb_begin();
-        pb_push1(p, NV097_SET_BEGIN_END, TRIANGLES); p += 2;      
+        p = pb_push1(p, NV097_SET_BEGIN_END, TRIANGLES);
         pb_push(p++, 0x40000000|NV20_TCL_PRIMITIVE_3D_INDEX_DATA, num_this_batch);
 
         /* Send the indices */
@@ -379,8 +374,8 @@ static void draw_indices(void)
         p += num_this_batch;
 
         /* Finished with this batch */
-        pb_push1(p, NV097_SET_BEGIN_END, NV097_SET_BEGIN_END_OP_END); p += 2;
-        pb_end(p);
+        p = pb_push1(p, NV097_SET_BEGIN_END, NV097_SET_BEGIN_END_OP_END);
+        p = pb_end(p);
 
         i += num_this_batch;
     }
