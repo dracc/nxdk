@@ -77,7 +77,7 @@ DWORD* push_command_parameter(DWORD* p, DWORD command, DWORD parameter) {
   return p;
 }
 
-static inline
+inline
 DWORD* xgu_begin(DWORD* p, XguPrimitiveType type) {
 
   // Force people to use xgu_end instead
@@ -86,7 +86,7 @@ DWORD* xgu_begin(DWORD* p, XguPrimitiveType type) {
   return push_command_parameter(p, NV097_SET_BEGIN_END, type);
 }
 
-static inline
+inline
 DWORD* xgu_end(DWORD* p) {
   return push_command_parameter(p, NV097_SET_BEGIN_END, NV097_SET_BEGIN_END_OP_END);
 }
@@ -148,7 +148,7 @@ DWORD* xgu_enable_texture(DWORD* p, int stage_index, bool enabled) {
 #define xgu_set_vertex_array_format(...) 0
 #define xgu_set_vertex_array_offset(...) 0
 
-static inline
+inline
 DWORD* xgu_elements16(DWORD* p, uint16_t* elements, unsigned int count) {
   assert(count % 2 == 0);
   // This one is a bit complicated
@@ -156,7 +156,7 @@ DWORD* xgu_elements16(DWORD* p, uint16_t* elements, unsigned int count) {
   return p;
 }
 
-static inline
+inline
 DWORD* xgu_elements32(DWORD* p, uint32_t* elements, unsigned int count) {
   // This one is a bit complicated
   assert(false);
@@ -165,7 +165,7 @@ DWORD* xgu_elements32(DWORD* p, uint32_t* elements, unsigned int count) {
 
 #define xgu_draw_arrays(...) 0
 
-static inline
+inline
 DWORD* xgu_set_alpha_test(DWORD* p, bool enabled) {
   return push_command_boolean(p, NV097_SET_ALPHA_TEST_ENABLE, enabled);
 }
