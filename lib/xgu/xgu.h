@@ -71,6 +71,43 @@ DWORD* push_command_boolean(DWORD* p, DWORD command, bool enabled) {
 }
 
 static inline
+DWORD* push_float(DWORD* p, float f) {
+  return push_parameter(p, *(uint32_t*)&f);
+}
+
+static inline
+DWORD* push_floats(DWORD* p, float* f, unsigned int count) {
+  for(unsigned int i = 0; i < count; i++) {
+    p = push_float(p, f[i]);
+  }
+  return p;
+}
+
+static inline
+DWORD* push_matrix2x2(DWORD* p, float m[2*2]) {
+  return push_floats(p, m, 2*2);
+}
+
+static inline
+DWORD* push_matrix4x4(DWORD* p, float m[4*4]) {
+  return push_floats(p, m, 4*4);
+}
+
+static inline
+DWORD* push_command_matrix2x2(DWORD* p, DWORD command, float m[2*2]) {
+  p = push_command(p, command, 2*2);
+  p = push_matrix2x2(p, m);
+  return p;
+}
+
+static inline
+DWORD* push_command_matrix4x4(DWORD* p, DWORD command, float m[4*4]) {
+  p = push_command(p, command, 4*4);
+  p = push_matrix4x4(p, m);
+  return p;
+}
+
+static inline
 DWORD* push_command_parameter(DWORD* p, DWORD command, DWORD parameter) {
   p = push_command(p, command, 1);
   p = push_parameter(p, parameter);
@@ -107,28 +144,26 @@ DWORD* xgu_clear(DWORD* p) {
 }
 
 inline
-DWORD* xgu_set_object(DWORD* p, int instance) {
+DWORD* xgu_set_object(DWORD* p, uint32_t instance) {
     p = push_command(p, NV097_SET_OBJECT, 1);
-    p = push_parameter(instance);
+    p = push_parameter(p, instance);
     return p;
 }
 
 inline
-DWORD* xgu_matrix_mode_modelview(DWORD* p) {
-    p = push_command(p, NV097_SET_MODELVIEW_MATRIX, 0);
-    return p;
+DWORD* xgu_set_model_view_matrix(DWORD* p, float m[4*4]) {
+    return push_command_matrix4x4(p, NV097_SET_MODEL_VIEW_MATRIX, m);
 }
 
 inline
-DWORD* xgu_matrix_mode_projection(DWORD* p) {
-    p = push_command(p, NV097_SET_PROJECTION_MATRIX, 0);
-    return p;
+DWORD* xgu_matrix_mode_projection(DWORD* p, float m[4*4]) {
+    return push_command_matrix4x4(p, NV097_SET_PROJECTION_MATRIX, m);
 }
 
 inline
-DWORD* xgu_matrix_mode_texture(DWORD* p) {
-    p = push_command(p, NV097_SET_TEXTURE_MATRIX, 0);
-    return p;
+DWORD* xgu_set_texture_matrix(DWORD* p, unsigned int index, float m[2*2]) {
+    assert(index == 0);
+    return push_command_matrix2x2(p, NV097_SET_TEXTURE_MATRIX, m);
 }
 
 inline
