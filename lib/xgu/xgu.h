@@ -452,7 +452,7 @@ DWORD* xgu_element32(DWORD* p, const uint32_t* elements, unsigned int count) {
 }
 
 inline
-DWORD* xgu_draw_arrays(DWORD* p, uint32_t start, uint32_t count) {
+DWORD* xgu_draw_arrays(DWORD* p, unsigned int start, unsigned int count) {
     assert(count>=1);
     assert(count<=256);
     return push_command_parameter(p, 0x40000000|NV097_DRAW_ARRAYS,
