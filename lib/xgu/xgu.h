@@ -11,7 +11,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <xboxrt/strings.h>
 #include <string.h>
 
 typedef enum {
@@ -437,7 +436,7 @@ DWORD* xgu_set_vertex_data_array_offset(DWORD* p, XguVertexArray index, const vo
 inline
 DWORD* xgu_element16(DWORD* p, const uint16_t* elements, unsigned int count) {
     assert(count % 2 == 0);
-    p = push_command(p, NV097_ARRAY_ELEMENT16, count);
+    p = push_command(p, 0x40000000|NV097_ARRAY_ELEMENT16, count / 2);
     memcpy(p, elements, count * sizeof(uint16_t));
     p += count / 2;
     return p;
@@ -445,7 +444,7 @@ DWORD* xgu_element16(DWORD* p, const uint16_t* elements, unsigned int count) {
 
 inline
 DWORD* xgu_element32(DWORD* p, const uint32_t* elements, unsigned int count) {
-    p = push_command(p, NV097_ARRAY_ELEMENT32, count);
+    p = push_command(p, 0x40000000|NV097_ARRAY_ELEMENT32, count);
     memcpy(p, elements, count * sizeof(uint32_t));
     p += count;
     return p;
