@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <xboxrt/strings.h>
 #include <string.h>
 
 typedef enum {

@@ -86,7 +86,7 @@ inline DWORD   *pb_push3(DWORD *p, DWORD command, DWORD param1, DWORD param2, DW
 inline DWORD   *pb_push4(DWORD *p, DWORD command, DWORD param1, DWORD param2, DWORD param3, DWORD param4);
 inline DWORD   *pb_push4f(DWORD *p, DWORD command, float param1, float param2, float param3, float param4);
 inline DWORD   *pb_push_transposed_matrix(DWORD *p, DWORD command, float *m);
-DWORD   *pb_end(DWORD *pEnd);    //end a block with this (triggers the data sending to GPU)
+void    pb_end(DWORD *pEnd);    //end a block with this (triggers the data sending to GPU)
 
 void    pb_extra_buffers(int n);//requests additional back buffers (default is 0) (call it before pb_init)
 void    pb_size(DWORD size);    //sets push buffer size (default is 512Kb) (call it before pb_init)

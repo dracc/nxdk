@@ -19,7 +19,6 @@
 #include "math3d.h"
 
 static uint32_t *alloc_vertices;
-static uint32_t *alloc_indices;
 static uint32_t  num_vertices;
 static uint32_t  num_indices;
 
@@ -77,7 +76,6 @@ void main(void)
 
     XVideoSetMode(640, 480, 32, REFRESH_DEFAULT);
 
-    pb_extra_buffers(2);
     if ((status = pb_init())) {
         debugPrint("pb_init Error %d\n", status);
         Sleep(2000);
@@ -100,9 +98,6 @@ Sleep(100);
     alloc_vertices = MmAllocateContiguousMemoryEx(sizeof(vertices), 0, MAXRAM, 0, 0x404);
     memcpy(alloc_vertices, vertices, sizeof(vertices));
     num_vertices = sizeof(vertices)/sizeof(vertices[0]);
-
-    alloc_indices = MmAllocateContiguousMemoryEx(sizeof(indices), 0, MAXRAM, 0, 0x404);
-    memcpy(alloc_indices, indices, sizeof(indices));
     num_indices = sizeof(indices)/sizeof(indices[0]);
 
     /* Setup to determine frames rendered every second */
@@ -157,7 +152,7 @@ Sleep(100);
         p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_WRAP(0),0x00030303);//set stage 0 texture modes (0x0W0V0U wrapping: 1=wrap 2=mirror 3=clamp 4=border 5=clamp to edge)
         p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_ENABLE(0),0x4003ffc0); //set stage 0 texture enable flags
         p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(0),0x04074000); //set stage 0 texture filters (AA!)
-        p = pb_end(p);
+        pb_end(p);
 
         /* Disable other texture stages */
         p = pb_begin();
@@ -170,7 +165,7 @@ Sleep(100);
         p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(1),0x02022000);//set stage 1 texture filters (no AA, stage not even used)
         p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(2),0x02022000);//set stage 2 texture filters (no AA, stage not even used)
         p = pb_push1(p,NV20_TCL_PRIMITIVE_3D_TX_FILTER(3),0x02022000);//set stage 3 texture filters (no AA, stage not even used)
-        p = pb_end(p);
+        pb_end(p);
 
         /* Send shader constants
          *

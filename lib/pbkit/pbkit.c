@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <assert.h>
 
 //a macro used to build up a valid method
 #define EncodeMethod(subchannel,command,nparam) ((nparam<<18)+(subchannel<<13)+command)
@@ -1869,7 +1870,7 @@ void pb_target_back_buffer(void)
     p=pb_push2(p,NV20_TCL_PRIMITIVE_3D_PARAMETER_A,NV_PRAMIN+(pb_DmaChID9Inst<<4)+0x04,dma_limit);
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_FIRE_INTERRUPT,PB_SETOUTER);
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_SET_OBJECT3,9);
-    p=pb_end(p);
+    pb_end(p);
 
     //DMA channel 11 is used by GPU in order to bitblt images
     dma_addr=pb_FBAddr[pb_back_index]&0x03FFFFFF;
@@ -1888,7 +1889,7 @@ void pb_target_back_buffer(void)
     p=pb_push2(p,NV20_TCL_PRIMITIVE_3D_PARAMETER_A,NV_PRAMIN+(pb_DmaChID11Inst<<4)+0x04,dma_limit);
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_FIRE_INTERRUPT,PB_SETOUTER);
     p=pb_push1_to(SUBCH_4,p,NV20_TCL_PRIMITIVE_3D_SET_OBJECT2,11);
-    p=pb_end(p);
+    pb_end(p);
 
     depth_stencil=1;
 
@@ -1927,7 +1928,7 @@ void pb_target_back_buffer(void)
         p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_SET_OBJECT4,10);
         p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_DEPTH_TEST_ENABLE,flag); //ZEnable=TRUE or FALSE (But don't use W, see below)
         p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_STENCIL_ENABLE,1);   //StencilEnable=TRUE
-        p=pb_end(p);
+        pb_end(p);
 
         pb_DepthStencilLast=depth_stencil;
     }
@@ -1941,7 +1942,7 @@ void pb_target_back_buffer(void)
     //We don't use floating point depth (0x00001000)
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_W_YUV_FPZ_FLAGS,0x00110001);
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_BUFFER_FORMAT,pb_GPUFrameBuffersFormat|pb_FBVFlag);
-    p=pb_end(p);
+    pb_end(p);
 }
 
 
@@ -1989,7 +1990,7 @@ void pb_target_extra_buffer(int index_buffer)
     p=pb_push2(p,NV20_TCL_PRIMITIVE_3D_PARAMETER_A,NV_PRAMIN+(pb_DmaChID9Inst<<4)+0x04,dma_limit);
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_FIRE_INTERRUPT,PB_SETOUTER);
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_SET_OBJECT3,9);
-    p=pb_end(p);
+    pb_end(p);
 
     //DMA channel 11 is used by GPU in order to bitblt images
     dma_addr=pb_EXAddr[index_buffer]&0x03FFFFFF;
@@ -2008,7 +2009,7 @@ void pb_target_extra_buffer(int index_buffer)
     p=pb_push2(p,NV20_TCL_PRIMITIVE_3D_PARAMETER_A,NV_PRAMIN+(pb_DmaChID11Inst<<4)+0x04,dma_limit);
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_FIRE_INTERRUPT,PB_SETOUTER);
     p=pb_push1_to(SUBCH_4,p,NV20_TCL_PRIMITIVE_3D_SET_OBJECT2,11);
-    p=pb_end(p);
+    pb_end(p);
     
     depth_stencil=1;
     
@@ -2047,7 +2048,7 @@ void pb_target_extra_buffer(int index_buffer)
         p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_SET_OBJECT4,10);
         p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_DEPTH_TEST_ENABLE,flag); //ZEnable=TRUE or FALSE (But don't use W, see below)
         p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_STENCIL_ENABLE,1);   //StencilEnable=TRUE
-        p=pb_end(p);
+        pb_end(p);
 
         pb_DepthStencilLast=depth_stencil;
     }
@@ -2061,7 +2062,7 @@ void pb_target_extra_buffer(int index_buffer)
     //We don't use floating point depth (0x00001000)
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_W_YUV_FPZ_FLAGS,0x00110001);
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_BUFFER_FORMAT,pb_GPUFrameBuffersFormat|pb_FBVFlag);
-    p=pb_end(p);
+    pb_end(p);
 }
 
 DWORD pb_get_vbl_counter(void)
@@ -2260,8 +2261,16 @@ DWORD *pb_end(DWORD *pEnd)
 #endif
 
 #ifdef DBG
-    if (pEnd!=pb_PushNext) debugPrint("pb_end: input pointer invalid or not following previous write addresses\n");
-    if (pb_BeginEndPair==0) debugPrint("pb_end without a pb_start\n");
+    if (pEnd!=pb_PushNext)
+    {
+        debugPrint("pb_end: input pointer invalid or not following previous write addresses\n");
+        assert(false);
+    }
+    if (pb_BeginEndPair==0)
+    {
+        debugPrint("pb_end without a pb_start\n");
+        assert(false);
+    }
     pb_BeginEndPair=0;
 #endif
 
@@ -2295,11 +2304,23 @@ DWORD *pb_end(DWORD *pEnd)
 inline DWORD *pb_push_to(DWORD subchannel, DWORD *p, DWORD command, DWORD nparam)
 {
 #ifdef DBG
-    if (p!=pb_PushNext) debugPrint("pb_push_to: new write address invalid or not following previous write addresses\n");
-    if (pb_BeginEndPair==0) debugPrint("pb_push_to: missing pb_begin earlier\n");
+    if (p!=pb_PushNext)
+    {
+        debugPrint("pb_push_to: new write address invalid or not following previous write addresses\n");
+        assert(false);
+    }
+    if (pb_BeginEndPair==0)
+    {
+        debugPrint("pb_push_to: missing pb_begin earlier\n");
+        assert(false);
+    }
     pb_PushIndex += 1 + nparam;
     pb_PushNext += 1 + nparam;
-    if (pb_PushIndex>128) debugPrint("pb_push_to: begin-end block musn't exceed 128 dwords\n");
+    if (pb_PushIndex>128)
+    {
+        debugPrint("pb_push_to: begin-end block musn't exceed 128 dwords\n");
+        assert(false);
+    }
 #endif
 
     *(p+0)=EncodeMethod(subchannel,command,nparam);
@@ -2404,7 +2425,7 @@ inline DWORD *pb_push_transposed_matrix(DWORD *p, DWORD command, float *m)
     *((float *)p++)=m[_34];
     *((float *)p++)=m[_44];
 
-    return p+17;
+    return p;
 }
 
 
@@ -2462,13 +2483,13 @@ void pb_set_viewport(int dwx,int dwy,int width,int height,float zmin,float zmax)
     p=pb_begin();
     p=pb_push4f(p,NV20_TCL_PRIMITIVE_3D_VIEWPORT_OX,x+0.53125f,y+0.53125f,0.0f,0.0f);
     p=pb_push2(p,NV20_TCL_PRIMITIVE_3D_DEPTH_RANGE_NEAR,dwzminscaled,dwzmaxscaled);
-    p=pb_end(p);
+    pb_end(p);
 */
     p=pb_begin();
     p=pb_push4f(p,NV20_TCL_PRIMITIVE_3D_VIEWPORT_OX,x+w,y-h,zmin*pb_ZScale,0.0f);
     p=pb_push4f(p,NV20_TCL_PRIMITIVE_3D_VIEWPORT_PX_DIV2,w,h,(zmax-zmin)*pb_ZScale,0.0f);
     p=pb_push2(p,NV20_TCL_PRIMITIVE_3D_DEPTH_RANGE_NEAR,dwzminscaled,dwzmaxscaled);
-    p=pb_end(p);
+    pb_end(p);
 }
 
 
@@ -2495,7 +2516,7 @@ void pb_fill(int x, int y, int w, int h, DWORD color)
     *(p++)=0;           //(depth<<8)|stencil
     *(p++)=color;           //color
     *(p++)=0xF0;            //triggers the HW rectangle fill (0x03 for D&S)
-    p=pb_end(p);
+    pb_end(p);
 }
 
 
@@ -2526,7 +2547,7 @@ void pb_erase_depth_stencil_buffer(int x, int y, int w, int h)
     *(p++)=0xffffff00;      //(depth<<8)|stencil
     *(p++)=0;           //color
     *(p++)=0x03;            //triggers the HW rectangle fill (only on D&S)
-    p=pb_end(p);
+    pb_end(p);
 }
 
 
@@ -2547,7 +2568,7 @@ int pb_finished(void)
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_PARAMETER_A,pb_back_index); //set param=back buffer index to show up
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_FIRE_INTERRUPT,PB_FINISHED); //subprogID PB_FINISHED: gets frame ready to show up soon
 //  p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_STALL_PIPELINE,0); //stall gpu pipeline (not sure it's needed in triple buffering technic)
-    p=pb_end(p);
+    pb_end(p);
 
     //insert in push buffer the commands to trigger selection of next back buffer
     //(because previous ones may not have finished yet, so need to use 0x0100 call)
@@ -3330,7 +3351,7 @@ int pb_init(void)
     p=pb_push1_to(SUBCH_3,p,NV20_TCL_PRIMITIVE_3D_SET_OBJECT5,17);
     p=pb_push1_to(SUBCH_3,p,NV20_TCL_PRIMITIVE_3D_SET_OBJECT_UNKNOWN,3);
     p=pb_push2_to(SUBCH_4,p,NV20_TCL_PRIMITIVE_3D_SET_OBJECT1,3,11);
-    p=pb_end(p); //calls pb_start() which will trigger the reading and sending to GPU (asynchronous, no waiting)
+    pb_end(p); //calls pb_start() which will trigger the reading and sending to GPU (asynchronous, no waiting)
 
     //setup needed for color computations
     p=pb_begin();
@@ -3347,7 +3368,7 @@ int pb_init(void)
     *(p++)=8;
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_SET_OBJECT8,12);
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_ACTIVATE_COLORS,0);
-    p=pb_end(p);
+    pb_end(p);
 
     p=pb_begin();
     p=pb_push1(p,NV097_SET_FLAT_SHADE_OP,1); //FIRST_VTX 
@@ -3357,7 +3378,7 @@ int pb_init(void)
     p=pb_push1(p,NV097_SET_COMPRESS_ZBUFFER_EN,0); //
     p=pb_push1(p,NV097_SET_SHADOW_ZSLOPE_THRESHOLD,0x7F800000);
     p=pb_push1(p,NV097_SET_ZMIN_MAX_CONTROL,1); //CULL_NEAR_FAR_EN_TRUE | ZCLAMP_EN_CULL | CULL_IGNORE_W_FALSE
-    p=pb_end(p);
+    pb_end(p);
 
     p=pb_begin();
     p=pb_push_transposed_matrix(p,NV20_TCL_PRIMITIVE_3D_CLIP_PLANE_A(0),pb_IdentityMatrix);
@@ -3373,7 +3394,7 @@ int pb_init(void)
     pb_push(p++,NV20_TCL_PRIMITIVE_3D_VP_UPLOAD_CONST_X,12);        //loads C-36, C-35 & C-34
     memcpy(p,pb_FixedPipelineConstants,12*4); p+=12; //used by common xbox shaders, but I doubt we will use them.
     //(also usually C-37 is screen center offset Decals vector & c-38 is Scales vector)
-    p=pb_end(p);
+    pb_end(p);
 
     //Frame buffers creation
     //So far, tested only with 640*480 32 bits (default openxdk res)
@@ -3621,7 +3642,7 @@ int pb_init(void)
     p=pb_begin();
     n=pb_FrameBuffersCount; //(BackBufferCount+1)
     p=pb_push3(p,NV20_TCL_PRIMITIVE_3D_MAIN_TILES_INDICES,0,1,n);
-    p=pb_end(p);
+    pb_end(p);
 
     //set area where GPU is allowed to draw pixels
     pb_set_viewport(0,0,vm.width*HScale,vm.height*VScale,0.0f,1.0f);
@@ -3629,7 +3650,7 @@ int pb_init(void)
     //set vertex shader type
     p=pb_begin();
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_SHADER_TYPE,SHADER_TYPE_INTERNAL);
-    p=pb_end(p);
+    pb_end(p);
 
     //no scissors (accept pixels in 8 rectangles covering all screen)
     p=pb_begin();
@@ -3639,7 +3660,7 @@ int pb_init(void)
         p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(i),0|((vm.width*HScale-1)<<16));
         p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(i),0|((vm.height*VScale-1)<<16));
     }
-    p=pb_end(p);
+    pb_end(p);
 
     //funcs: never(0x200), less(0x201), equal(0x202), less or equal(0x203)
     //greater(0x204), not equal(0x205), greater or equal(0x206), always(0x207)
@@ -3671,7 +3692,7 @@ int pb_init(void)
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_POLYGON_OFFSET_POINT_ENABLE,0); //PtOffEnable=FALSE (because ZBias=0.0f)
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_POLYGON_OFFSET_LINE_ENABLE,0); //WireFrameOffEnable=FALSE (because ZBias=0.0f)
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_POLYGON_OFFSET_FILL_ENABLE,0); //SolidOffEnable=FALSE (because ZBias=0.0f)
-    p=pb_end(p);
+    pb_end(p);
 
     //various intial settings (complex states)
     p=pb_begin();
@@ -3700,7 +3721,7 @@ int pb_init(void)
     else
         p=pb_push2(p,NV20_TCL_PRIMITIVE_3D_PARAMETER_A,NV_PGRAPH_UNKNOWN_400B80,(0x45EAD10E&~0x18100000));
     p=pb_push1(p,NV20_TCL_PRIMITIVE_3D_FIRE_INTERRUPT,PB_SETOUTER); //calls subprogID PB_SETOUTER: does VIDEOREG(ParamA)=ParamB
-    p=pb_end(p);
+    pb_end(p);
 
 
     //various intial settings (texture stages states)
@@ -3735,7 +3756,7 @@ int pb_init(void)
     p=pb_push3(p,0x03f0,0,0,0); //texture stages 3 TexCoordIndex="passthru"
     p=pb_push1(p,0x1be4,0); //texture stage 3 BorderColor=0x000000
     p=pb_push1(p,0x0aec,0); //texture stage 3 ColorKeyColor=0x000000
-    p=pb_end(p);
+    pb_end(p);
 
     memset((DWORD *)pb_FBAddr[0],0,pb_FBSize);
     memset((DWORD *)pb_DSAddr,0,pb_DSSize);
