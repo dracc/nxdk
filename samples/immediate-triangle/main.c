@@ -80,13 +80,17 @@ int main(void)
     {
         p = pb_begin();
 
-        //FIXME: p = xgu_set_skinning(p, XGU_SKINNING_OFF);
-        //FIXME: p = xgu_set_normalization(p, false);
+        p = xgu_set_skin_mode(p, XGU_SKIN_MODE_OFF);
+        p = xgu_set_normalization_enable(p, false);
         p = xgu_set_lighting_enable(p, false);
 
         for(int i = 0; i < XGU_TEXTURE_COUNT; i++) {
-            //FIXME: p = xgu_set_texgen(p, XGU_TEXGEN_OFF);
-            //p = xgu_set_texture_matrix_enable(p, i, false);
+            p = xgu_set_texgen_s(p, i, XGU_TEXGEN_DISABLE);
+            p = xgu_set_texgen_t(p, i, XGU_TEXGEN_DISABLE);
+            p = xgu_set_texgen_r(p, i, XGU_TEXGEN_DISABLE);
+            p = xgu_set_texgen_q(p, i, XGU_TEXGEN_DISABLE);
+            p = xgu_set_texture_matrix_enable(p, i, false);
+            p = xgu_set_texture_matrix(p, i, m_identity);
         }
 
         for(int i = 0; i < XGU_WEIGHT_COUNT; i++) {
@@ -99,7 +103,7 @@ int main(void)
 
     /* Set up all states for hardware vertex pipeline */
     p = pb_begin();
-    p = xgu_set_transform_execution_mode(p, XGU_FIXED, XGU_RANGE_MODE_USER);
+    p = xgu_set_transform_execution_mode(p, XGU_FIXED, XGU_RANGE_MODE_PRIVATE);
     //FIXME: p = xgu_set_fog_enable(p, false);
     p = xgu_set_projection_matrix(p, m_identity); //FIXME: Unused in XQEMU
     p = xgu_set_composite_matrix(p, m_viewport); //FIXME: Always used in XQEMU?
