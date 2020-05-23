@@ -780,26 +780,26 @@ uint32_t* xgu_set_transform_program_cxt_write_enable(uint32_t* p, bool enabled) 
 
 XGU_API
 uint32_t* xgu_set_specular(uint32_t* p, float a, float b, float c, float d, float e, float f) {
-  p = push_command(p, NV097_SET_SPECULAR_PARAMS, 6);
-  p = push_float(p, a);
-  p = push_float(p, b);
-  p = push_float(p, c);
-  p = push_float(p, d);
-  p = push_float(p, e);
-  p = push_float(p, f);
-  return p;
+    p = push_command(p, NV097_SET_SPECULAR_PARAMS, 6);
+    p = push_float(p, a);
+    p = push_float(p, b);
+    p = push_float(p, c);
+    p = push_float(p, d);
+    p = push_float(p, e);
+    p = push_float(p, f);
+    return p;
 }
 
 XGU_API
 uint32_t* xgu_set_back_specular(uint32_t* p, float a, float b, float c, float d, float e, float f) {
-  p = push_command(p, NV097_SET_BACK_SPECULAR_PARAMS, 6);
-  p = push_float(p, a);
-  p = push_float(p, b);
-  p = push_float(p, c);
-  p = push_float(p, d);
-  p = push_float(p, e);
-  p = push_float(p, f);
-  return p;
+    p = push_command(p, NV097_SET_BACK_SPECULAR_PARAMS, 6);
+    p = push_float(p, a);
+    p = push_float(p, b);
+    p = push_float(p, c);
+    p = push_float(p, d);
+    p = push_float(p, e);
+    p = push_float(p, f);
+    return p;
 }
 
 XGU_API
