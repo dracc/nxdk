@@ -867,6 +867,26 @@ uint32_t* xgu_set_two_side_light_enable(uint32_t* p, bool enabled) {
     return push_command_boolean(p, NV097_SET_TWO_SIDE_LIGHT_EN, enabled);
 }
 
+#define NV097_SET_LIGHT_CONTROL                            0x0294
+#define NV097_SET_LIGHT_CONTROL_SEPARATE_SPECULAR_EN   0x00000003
+#define NV097_SET_LIGHT_CONTROL_LOCALEYE               0x00010000
+#define NV097_SET_LIGHT_CONTROL_SOUT                   0xFFFE0000
+#define NV097_SET_LIGHT_CONTROL_SOUT_ZERO_OUT            0
+#define NV097_SET_LIGHT_CONTROL_SOUT_PASSTHROUGH         1
+
+typedef enum {
+    XGU_SOUT_ZERO_OUT = NV097_SET_LIGHT_CONTROL_SOUT_ZERO_OUT,
+    XGU_SOUT_PASSTHROUGH = NV097_SET_LIGHT_CONTROL_SOUT_PASSTHROUGH,
+} XguSout;
+
+XGU_API
+uint32_t* xgu_set_light_control(uint32_t* p, bool separate_specular, bool localeye, XguSout sout) {
+    return push_command_parameter(p, NV097_SET_LIGHT_CONTROL, 
+                                  XGU_MASK(NV097_SET_LIGHT_CONTROL_SEPARATE_SPECULAR_EN, separate_specular) |
+                                  XGU_MASK(NV097_SET_LIGHT_CONTROL_LOCALEYE, localeye) |
+                                  XGU_MASK(NV097_SET_LIGHT_CONTROL_SOUT, sout));
+}
+
 XGU_API
 uint32_t* xgu_set_light_enable_mask(uint32_t* p, XguLightMask light0, XguLightMask light1, XguLightMask light2, XguLightMask light3, XguLightMask light4, XguLightMask light5,XguLightMask light6, XguLightMask light7) {
     return push_command_parameter(p, NV097_SET_LIGHT_ENABLE_MASK, 0
