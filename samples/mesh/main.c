@@ -46,8 +46,6 @@ typedef struct Vertex {
 #include "verts.h"
 #include "texture.h"
 
-#define MASK(mask, val) (((val) << (ffs(mask)-1)) & (mask))
-
 struct {
     uint16_t width;
     uint16_t height;
@@ -291,19 +289,17 @@ static void init_shader(void)
     p = pb_begin();
 
     /* Set run address of shader */
-    p = pb_push1(p, NV097_SET_TRANSFORM_PROGRAM_START, 0);
+    p = xgu_set_transform_program_start(p, 0);
 
     /* Set execution mode */
-    p = pb_push1(p, NV097_SET_TRANSFORM_EXECUTION_MODE,
-                 MASK(NV097_SET_TRANSFORM_EXECUTION_MODE_MODE, NV097_SET_TRANSFORM_EXECUTION_MODE_MODE_PROGRAM)
-                 | MASK(NV097_SET_TRANSFORM_EXECUTION_MODE_RANGE_MODE, NV097_SET_TRANSFORM_EXECUTION_MODE_RANGE_MODE_PRIV));
+    p = xgu_set_transform_execution_mode(p, XGU_PROGRAM, XGU_RANGE_MODE_PRIVATE);
 
-    p = pb_push1(p, NV097_SET_TRANSFORM_PROGRAM_CXT_WRITE_EN, 0);
+    p = xgu_set_transform_program_cxt_write_enable(p, 0);
     pb_end(p);
 
     /* Set cursor and begin copying program */
     p = pb_begin();
-    p = pb_push1(p, NV097_SET_TRANSFORM_PROGRAM_LOAD, 0);
+    p = xgu_set_transform_program_load(p, 0);
     pb_end(p);
 
     /* Copy program instructions (16-bytes each) */
