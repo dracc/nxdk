@@ -34,3 +34,6 @@
 [submodule "lib/usb/libusbohci"]
 	path = lib/usb/libusbohci
 	url = https://github.com/XboxDev/libusbohci.git
+[submodule "lib/xgu"]
+	path = lib/xgu
+	url = https://github.com/dracc/xgu
