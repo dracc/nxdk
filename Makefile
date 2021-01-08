@@ -92,6 +92,9 @@ endif
 
 ifneq ($(NXDK_NET),)
 include $(NXDK_DIR)/lib/net/Makefile
+ifneq ($(NXDK_TLS),)
+include $(NXDK_DIR)/lib/mbedtls/Makefile
+endif
 endif
 
 ifneq ($(NXDK_SDL),)

@@ -31,3 +31,6 @@
 [submodule "lib/sdl/SDL_image"]
 	path = lib/sdl/SDL2_image
 	url = https://github.com/SDL-mirror/SDL_image.git
+[submodule "lib/mbedtls/mbedtls"]
+	path = lib/mbedtls/mbedtls
+	url = http://github.com/ARMmbed/mbedtls
