@@ -1,32 +1,78 @@
-USB_SRCS := \
-	$(NXDK_DIR)/lib/usb/host/ohci-hcd.c \
-	$(NXDK_DIR)/lib/usb/core/message.c \
-	$(NXDK_DIR)/lib/usb/core/hcd.c \
-	$(NXDK_DIR)/lib/usb/core/hcd-pci.c \
-	$(NXDK_DIR)/lib/usb/core/hub.c \
-	$(NXDK_DIR)/lib/usb/core/usb.c \
-	$(NXDK_DIR)/lib/usb/core/config.c \
-	$(NXDK_DIR)/lib/usb/core/urb.c \
-	$(NXDK_DIR)/lib/usb/core/buffer_simple.c \
-	$(NXDK_DIR)/lib/usb/core/usb-debug.c \
-	$(NXDK_DIR)/lib/usb/sys/BootUSB.c \
-	$(NXDK_DIR)/lib/usb/sys/linuxwrapper.c \
-	$(NXDK_DIR)/lib/usb/sys/xpad.c \
-	$(NXDK_DIR)/lib/usb/sys/xremote.c \
-	$(NXDK_DIR)/lib/usb/sys/usbkey.c \
-	$(NXDK_DIR)/lib/usb/sys/usbmouse.c \
-	$(NXDK_DIR)/lib/usb/misc/misc.c \
-	$(NXDK_DIR)/lib/usb/misc/pci.c \
-	$(NXDK_DIR)/lib/usb/misc/malloc.c
+USBH_DIR=$(NXDK_DIR)/lib/usb
 
-USB_OBJS = $(addsuffix .obj, $(basename $(USB_SRCS)))
+# USB Host core
+USB_CORE_SRCS := \
+	$(USBH_DIR)/libusbohci/src_core/hub.c \
+	$(USBH_DIR)/libusbohci/src_core/mem_alloc.c \
+	$(USBH_DIR)/libusbohci/src_core/ohci.c \
+	$(USBH_DIR)/libusbohci/src_core/support.c \
+	$(USBH_DIR)/libusbohci/src_core/usb_core.c
 
-$(NXDK_DIR)/lib/libnxdk_usb.lib: $(USB_OBJS)
+USBH_OBJS = $(addsuffix .obj, $(basename $(USB_CORE_SRCS)))
 
-main.exe: $(NXDK_DIR)/lib/libnxdk_usb.lib
+# Xbox specific files
+USB_XBOX_SRCS := \
+	$(USBH_DIR)/libusbohci_xbox/usbh_xbox.c \
+	$(USBH_DIR)/libusbohci_xbox/xid_driver.c
+
+USBH_OBJS += $(addsuffix .obj, $(basename $(USB_XBOX_SRCS)))
+
+# USB Human Input Device class driver
+ifneq ($(NXDK_USB_ENABLE_HID),)
+USB_HID_SRCS := \
+	$(USBH_DIR)/libusbohci/src_hid/hid_core.c \
+	$(USBH_DIR)/libusbohci/src_hid/hid_driver.c
+
+USBH_OBJS += $(addsuffix .obj, $(basename $(USB_HID_SRCS)))
+endif
+
+# USB Communication Device class driver
+ifneq ($(NXDK_USB_ENABLE_CDC),)
+USB_CDC_SRCS := \
+	$(USBH_DIR)/libusbohci/src_cdc/cdc_core.c \
+	$(USBH_DIR)/libusbohci/src_cdc/cdc_driver.c \
+	$(USBH_DIR)/libusbohci/src_cdc/cdc_parser.c
+
+USBH_OBJS += $(addsuffix .obj, $(basename $(USB_CDC_SRCS)))
+endif
+
+# USB Audio class driver
+ifneq ($(NXDK_USB_ENABLE_UAC),)
+USB_UAC_SRCS := \
+	$(USBH_DIR)/libusbohci/src_uac/uac_core.c \
+	$(USBH_DIR)/libusbohci/src_uac/uac_driver.c \
+	$(USBH_DIR)/libusbohci/src_uac/uac_parser.c
+
+USBH_OBJS += $(addsuffix .obj, $(basename $(USB_UAC_SRCS)))
+endif
+
+# USB Video class driver
+ifneq ($(NXDK_USB_ENABLE_UVC),)
+USB_UVC_SRCS := \
+	$(USBH_DIR)/libusbohci/src_uvc/uvc_core.c \
+	$(USBH_DIR)/libusbohci/src_uvc/uvc_driver.c \
+	$(USBH_DIR)/libusbohci/src_uvc/uvc_parser.c
+
+USBH_OBJS += $(addsuffix .obj, $(basename $(USB_UVC_SRCS)))
+endif
+
+# Mass Storage Class driver
+ifneq ($(NXDK_USB_ENABLE_MSC),)
+USB_MSC_SRCS := \
+	$(USBH_DIR)/libusbohci/src_msc/msc_driver.c \
+	$(USBH_DIR)/libusbohci/src_msc/msc_xfer.c
+USBH_OBJS += $(addsuffix .obj, $(basename $(USB_MSC_SRCS)))
+endif
+
+$(NXDK_DIR)/lib/nxdk_usb.lib: $(USBH_OBJS)
+
+NXDK_CFLAGS   += -I$(USBH_DIR)/libusbohci/inc -I$(USBH_DIR)/libusbohci_xbox/ -DUSBH_USE_EXTERNAL_CONFIG=\"usbh_config_xbox.h\"
+NXDK_CXXFLAGS += -I$(USBH_DIR)/libusbohci/inc -I$(USBH_DIR)/libusbohci_xbox/ -DUSBH_USE_EXTERNAL_CONFIG=\"usbh_config_xbox.h\"
+
+main.exe: $(NXDK_DIR)/lib/nxdk_usb.lib
 
 CLEANRULES += clean-usb
 
 .PHONY: clean-usb
 clean-usb:
-	$(VE)rm -f $(USB_OBJS) $(NXDK_DIR)/lib/libnxdk_usb.lib
+	$(VE)rm -f $(USBH_OBJS) $(NXDK_DIR)/lib/nxdk_usb.lib

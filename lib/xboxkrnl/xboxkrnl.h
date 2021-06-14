@@ -160,6 +160,9 @@ typedef CONST UNICODE_STRING *PCUNICODE_STRING;
 
 #define CONTAINING_RECORD(Address, Type, Field) ((Type *)((PCHAR)(Address) - (ULONG_PTR)__builtin_offsetof(Type, Field)))
 
+#define PAGE_SIZE 4096
+#define ROUND_TO_PAGES(Size) (((ULONG_PTR) (Size) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
+
 /**
  * Time information
  */
@@ -1258,68 +1261,12 @@ typedef struct _ERWLOCK
     KSEMAPHORE ReaderSemaphore;
 } ERWLOCK, *PERWLOCK;
 
-#define EXCEPTION_NONCONTINUABLE 0x01
-#define EXCEPTION_UNWINDING 0x02
-#define EXCEPTION_EXIT_UNWIND 0x04
-#define EXCEPTION_STACK_INVALID 0x08
-#define EXCEPTION_NESTED_CALL 0x10
-#define EXCEPTION_TARGET_UNWIND 0x20
-#define EXCEPTION_COLLIDED_UNWIND 0x40
-#define EXCEPTION_UNWIND (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND | EXCEPTION_TARGET_UNWIND | EXCEPTION_COLLIDED_UNWIND)
-#define EXCEPTION_MAXIMUM_PARAMETERS 15
-
-typedef struct _EXCEPTION_RECORD
-{
-    NTSTATUS ExceptionCode;
-    ULONG ExceptionFlags;
-    struct _EXCEPTION_RECORD *ExceptionRecord;
-    PVOID ExceptionAddress;
-    ULONG NumberParameters;
-    ULONG_PTR ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
-} EXCEPTION_RECORD, *PEXCEPTION_RECORD;
-
 typedef struct _XBOX_REFURB_INFO
 {
     ULONG Signature;
     ULONG PowerCycleCount;
     LARGE_INTEGER FirstSetTime;
 } XBOX_REFURB_INFO;
-
-typedef struct _FLOATING_SAVE_AREA
-{
-    WORD ControlWord;
-    WORD StatusWord;
-    WORD TagWord;
-    WORD ErrorOpcode;
-    DWORD ErrorOffset;
-    DWORD ErrorSelector;
-    DWORD DataOffset;
-    DWORD DataSelector;
-    DWORD MXCsr;
-    DWORD Reserved2;
-    BYTE RegisterArea[128];
-    BYTE XmmRegisterArea[128];
-    BYTE Reserved4[224];
-    DWORD Cr0NpxState;
-} __attribute__((packed)) FLOATING_SAVE_AREA, *PFLOATING_SAVE_AREA;
-
-typedef struct _CONTEXT
-{
-    DWORD ContextFlags;
-    FLOATING_SAVE_AREA FloatSave;
-    DWORD Edi;
-    DWORD Esi;
-    DWORD Ebx;
-    DWORD Edx;
-    DWORD Ecx;
-    DWORD Eax;
-    DWORD Ebp;
-    DWORD Eip;
-    DWORD SegCs;
-    DWORD EFlags;
-    DWORD Esp;
-    DWORD SegSs;
-} CONTEXT, *PCONTEXT;
 
 typedef struct _KFLOATING_SAVE
 {
@@ -2125,7 +2072,7 @@ XBAPI VOID NTAPI RtlFreeAnsiString
  * Fills a specified memory area with repetitions of a ULONG value
  * @param Destination A pointer to the (ULONG-aligned) memory block which is to be filled
  * @param Length The length of the memory block which is to be filled
- * @param Fill The ULONG-value with which the memory block will be filled
+ * @param Pattern The ULONG-value with which the memory block will be filled
  */
 XBAPI VOID NTAPI RtlFillMemoryUlong
 (
@@ -2297,7 +2244,7 @@ XBAPI SIZE_T NTAPI RtlCompareMemory
 
 /**
  * Converts a single-byte character string (C-style string, NOT an ANSI_STRING object!) to an integer value
- * @param String1 Pointer to a null-terminated single-byte string
+ * @param String Pointer to a null-terminated single-byte string
  * @param Base Specifies the base (decimal, binary, octal, hexadecimal). If not given, the routine looks for prefixes in the given string (0x, 0o, 0b), default is decimal.
  * @param Value Pointer to a ULONG variable where the converted value will be stored
  * @return STATUS_SUCCESS if the string was successfully converted, STATUS_INVALID_PARAMETER otherwise
@@ -2444,8 +2391,8 @@ XBAPI NTSTATUS NTAPI PhyInitialize
 );
 
 /**
- * Read the status information from the NICs' registers
- * @param update
+ * Returns link status information either from NIC registers or from the last value cached by the kernel
+ * @param update If FALSE, the kernel returns the cached value, otherwise the hardware is polled and the cached value updated
  * @return Flags describing the status of the NIC
  */
 XBAPI DWORD NTAPI PhyGetLinkState
@@ -2604,7 +2551,7 @@ XBAPI VOID NTAPI NtUserIoApcDispatcher
 
 /**
  * Suspends the target thread and optionally returns the previous suspend count.
- * @param The handle of the thread object to suspend.
+ * @param ThreadHandle The handle of the thread object to suspend.
  * @param PreviousSuspendCount Optional pointer to a variable that receives the thread's previous suspend count.
  * @return The status of the operation.
  */
@@ -2679,7 +2626,7 @@ XBAPI NTSTATUS NTAPI NtSetEvent
 
 /**
  * Resumes the target thread (see NtSuspendThread) and optionally returns the previous suspend count.
- * @param The handle of the thread object to resume.
+ * @param ThreadHandle The handle of the thread object to resume.
  * @param PreviousSuspendCount Optional pointer to a variable that receives the thread's previous suspend count.
  * @return The status of the operation.
  */
@@ -2902,6 +2849,19 @@ XBAPI NTSTATUS NTAPI NtOpenDirectoryObject
     IN POBJECT_ATTRIBUTES ObjectAttributes
 );
 
+#define CTL_CODE(DeviceType, Function, Method, Access) (((DeviceType) << 16) | ((Access) << 14) | ((Function) << 2) | (Method))
+#define METHOD_BUFFERED 0
+#define METHOD_IN_DIRECT 1
+#define METHOD_OUT_DIRECT 2
+#define METHOD_NEITHER 3
+
+#define FILE_ANY_ACCESS 0x0000
+#define FILE_READ_ACCESS 0x0001
+#define FILE_WRITE_ACCESS 0x0002
+
+#define FILE_DEVICE_FILE_SYSTEM 0x00000009
+#define FSCTL_DISMOUNT_VOLUME CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 8, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
 XBAPI NTSTATUS NTAPI NtFsControlFile
 (
     IN HANDLE FileHandle,
@@ -2935,6 +2895,62 @@ XBAPI NTSTATUS NTAPI NtDuplicateObject
     OUT PHANDLE TargetHandle,
     IN ULONG Options
 );
+
+typedef enum _MEDIA_TYPE
+{
+    Unknown,
+    F5_1Pt2_512,
+    F3_1Pt44_512,
+    F3_2Pt88_512,
+    F3_20Pt8_512,
+    F3_720_512,
+    F5_360_512,
+    F5_320_512,
+    F5_320_1024,
+    F5_180_512,
+    F5_160_512,
+    RemovableMedia,
+    FixedMedia,
+    F3_120M_512,
+    F3_640_512,
+    F5_640_512,
+    F5_720_512,
+    F3_1Pt2_512,
+    F3_1Pt23_1024,
+    F5_1Pt23_1024,
+    F3_128Mb_512,
+    F3_230Mb_512,
+    F8_256_128,
+    F3_200Mb_512,
+    F3_240M_512,
+    F3_32M_512
+} MEDIA_TYPE, *PMEDIA_TYPE;
+
+typedef struct _DISK_GEOMETRY
+{
+    LARGE_INTEGER Cylinders;
+    MEDIA_TYPE MediaType;
+    DWORD TracksPerCylinder;
+    DWORD SectorsPerTrack;
+    DWORD BytesPerSector;
+} DISK_GEOMETRY, *PDISK_GEOMETRY;
+
+typedef struct _PARTITION_INFORMATION
+{
+    LARGE_INTEGER StartingOffset;
+    LARGE_INTEGER PartitionLength;
+    DWORD HiddenSectors;
+    DWORD PartitionNumber;
+    BYTE PartitionType;
+    BOOLEAN BootIndicator;
+    BOOLEAN RecognizedPartition;
+    BOOLEAN RewritePartition;
+} PARTITION_INFORMATION, *PPARTITION_INFORMATION;
+
+#define IOCTL_DISK_BASE 0x00000007
+
+#define IOCTL_DISK_GET_DRIVE_GEOMETRY CTL_CODE(IOCTL_DISK_BASE, 0x0000, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_DISK_GET_PARTITION_INFO CTL_CODE(IOCTL_DISK_BASE, 0x0001, METHOD_BUFFERED, FILE_READ_ACCESS)
 
 XBAPI NTSTATUS NTAPI NtDeviceIoControlFile
 (
@@ -4149,7 +4165,7 @@ XBAPI OBJECT_TYPE ExMutantObjectType;
 
 XBAPI LARGE_INTEGER NTAPI ExInterlockedAddLargeInteger
 (
-    IN PLARGE_INTEGER Addend,
+    IN OUT PLARGE_INTEGER Addend,
     IN LARGE_INTEGER Increment
 );
 
@@ -4358,7 +4374,7 @@ XBAPI PSINGLE_LIST_ENTRY FASTCALL InterlockedPopEntrySList
  */
 XBAPI LONG FASTCALL InterlockedIncrement
 (
-    IN PLONG Addend
+    IN OUT LONG volatile *Addend
 );
 
 XBAPI PSINGLE_LIST_ENTRY FASTCALL InterlockedFlushSList
@@ -4368,13 +4384,13 @@ XBAPI PSINGLE_LIST_ENTRY FASTCALL InterlockedFlushSList
 
 XBAPI LONG FASTCALL InterlockedExchangeAdd
 (
-    IN OUT PLONG Addend,
+    IN OUT LONG volatile *Addend,
     IN LONG Increment
 );
 
 XBAPI LONG FASTCALL InterlockedExchange
 (
-    IN OUT PLONG Target,
+    IN OUT LONG volatile *Target,
     IN LONG Value
 );
 
@@ -4385,12 +4401,12 @@ XBAPI LONG FASTCALL InterlockedExchange
  */
 XBAPI LONG FASTCALL InterlockedDecrement
 (
-    IN PLONG Addend
+    IN OUT LONG volatile *Addend
 );
 
 XBAPI LONG FASTCALL InterlockedCompareExchange
 (
-    IN OUT PLONG Destination,
+    IN OUT LONG volatile *Destination,
     IN LONG ExChange,
     IN LONG Comparand
 );
@@ -4456,7 +4472,7 @@ XBAPI PLIST_ENTRY FASTCALL ExfInterlockedInsertHeadList
  */
 XBAPI LONGLONG FASTCALL ExInterlockedCompareExchange64
 (
-    IN PLONGLONG Destination,
+    IN OUT LONGLONG volatile *Destination,
     IN PLONGLONG Exchange,
     IN PLONGLONG Comparand
 );

@@ -12,9 +12,6 @@
 	path = lib/pdclib
 	url = https://github.com/XboxDev/nxdk-pdclib.git
 	branch = nxdk
-[submodule "lib/sdl/SDL_ttf"]
-	path = lib/sdl/SDL_ttf
-	url = https://github.com/SDL-mirror/SDL_ttf
 [submodule "lib/libcxx"]
 	path = lib/libcxx
 	url = https://github.com/XboxDev/nxdk-libcxx.git
@@ -28,6 +25,15 @@
 [submodule "lib/libjpeg/libjpeg-turbo"]
 	path = lib/libjpeg/libjpeg-turbo
 	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git
-[submodule "lib/sdl/SDL_image"]
+[submodule "lib/sdl/SDL_ttf"]
+	path = lib/sdl/SDL_ttf
+	url = https://github.com/libsdl-org/SDL_ttf.git
+[submodule "lib/sdl/SDL2_image"]
 	path = lib/sdl/SDL2_image
-	url = https://github.com/SDL-mirror/SDL_image.git
+	url = https://github.com/libsdl-org/SDL_image.git
+[submodule "lib/usb/libusbohci"]
+	path = lib/usb/libusbohci
+	url = https://github.com/XboxDev/libusbohci.git
+[submodule "lib/xgu"]
+	path = lib/xgu
+	url = https://github.com/dracc/xgu

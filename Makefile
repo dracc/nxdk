@@ -10,10 +10,6 @@ ifeq ($(OUTPUT_DIR),)
 OUTPUT_DIR = bin
 endif
 
-ifeq ($(NXDK_STACKSIZE),)
-NXDK_STACKSIZE = 65536
-endif
-
 UNAME_S := $(shell uname -s)
 UNAME_M := $(shell uname -m)
 
@@ -58,17 +54,16 @@ TOOLS        = cxbe vp20compiler fp20compiler extract-xiso
 NXDK_CFLAGS  = -target i386-pc-win32 -march=pentium3 \
                -ffreestanding -nostdlib -fno-builtin \
                -I$(NXDK_DIR)/lib -I$(NXDK_DIR)/lib/xboxrt/libc_extensions \
-               -I$(NXDK_DIR)/lib/hal \
                -isystem $(NXDK_DIR)/lib/pdclib/include \
                -I$(NXDK_DIR)/lib/pdclib/platform/xbox/include \
                -I$(NXDK_DIR)/lib/winapi \
                -I$(NXDK_DIR)/lib/xboxrt/vcruntime \
-               -Wno-ignored-attributes -DNXDK -D__STDC__=1
+               -DNXDK -D__STDC__=1
 NXDK_ASFLAGS = -target i386-pc-win32 -march=pentium3 \
                -nostdlib -I$(NXDK_DIR)/lib -I$(NXDK_DIR)/lib/xboxrt
 NXDK_CXXFLAGS = -I$(NXDK_DIR)/lib/libcxx/include $(NXDK_CFLAGS) -fno-exceptions
-NXDK_LDFLAGS = -subsystem:windows -fixed -base:0x00010000 -entry:XboxCRTEntry \
-               -stack:$(NXDK_STACKSIZE) -safeseh:no -include:__fltused -include:__xlibc_check_stack -merge:.edata=.edataxb
+NXDK_LDFLAGS = -subsystem:windows -fixed -base:0x00010000 \
+               -stack:65536 -merge:.edata=.edataxb
 
 ifeq ($(DEBUG),y)
 NXDK_ASFLAGS += -g -gdwarf-4
@@ -138,11 +133,11 @@ main.exe: $(OBJS) $(NXDK_DIR)/lib/xboxkrnl/libxboxkrnl.lib
 
 %.obj: %.cpp
 	@echo "[ CXX      ] $@"
-	$(VE) $(CXX) $(NXDK_CXXFLAGS) $(CXXFLAGS) -MD -MP -MT '$@' -MF '$(patsubst %.cpp,%.cpp.d,$<)' -c -o '$@' '$<'
+	$(VE) $(CXX) $(NXDK_CXXFLAGS) $(CXXFLAGS) -MD -MP -MT '$@' -MF '$(patsubst %.obj,%.cpp.d,$@)' -c -o '$@' '$<'
 
 %.obj: %.c
 	@echo "[ CC       ] $@"
-	$(VE) $(CC) $(NXDK_CFLAGS) $(CFLAGS) -MD -MP -MT '$@' -MF '$(patsubst %.c,%.c.d,$<)' -c -o '$@' '$<'
+	$(VE) $(CC) $(NXDK_CFLAGS) $(CFLAGS) -MD -MP -MT '$@' -MF '$(patsubst %.obj,%.c.d,$@)' -c -o '$@' '$<'
 
 %.obj: %.s
 	@echo "[ AS       ] $@"

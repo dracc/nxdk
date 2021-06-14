@@ -7,11 +7,12 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <pbkit/pbkit.h>
+#include <xgu/xgu.h>
+#include <xgu/xgux.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <windows.h>
 #include <xboxkrnl/xboxkrnl.h>
 #include <hal/debug.h>
@@ -44,8 +45,6 @@ typedef struct Vertex {
 
 #include "verts.h"
 #include "texture.h"
-
-#define MASK(mask, val) (((val) << (ffs(mask)-1)) & (mask))
 
 struct {
     uint16_t width;
@@ -207,31 +206,25 @@ int main(void)
         pb_push(p++, NV20_TCL_PRIMITIVE_3D_VP_UPLOAD_CONST_X, 4);
         memcpy(p, constants_0, 4*4); p+=4;
 
-        /* Clear all attributes */
-        pb_push(p++,NV097_SET_VERTEX_DATA_ARRAY_FORMAT,16);
-        for(i = 0; i < 16; i++) {
-            *(p++) = 2;
-        }
         pb_end(p);
+        
+        /* Clear all attributes */
+        for(i = 0; i < XGU_ATTRIBUTE_COUNT; i++) {
+            xgux_set_attrib_pointer(i, XGU_FLOAT, 0, 0, NULL);
+        }
 
         /*
          * Setup vertex attributes
          */
-
-        /* Set vertex position attribute */
-        set_attrib_pointer(0, NV097_SET_VERTEX_DATA_ARRAY_FORMAT_TYPE_F,
-                           3, sizeof(Vertex), &alloc_vertices[0]);
-        
-        /* Set vertex normal attribute */
-        set_attrib_pointer(2, NV097_SET_VERTEX_DATA_ARRAY_FORMAT_TYPE_F,
-                           3, sizeof(Vertex), &alloc_vertices[3]);
-        
-        /* Set texture coordinate attribute */
-        set_attrib_pointer(9, NV097_SET_VERTEX_DATA_ARRAY_FORMAT_TYPE_F,
-                           2, sizeof(Vertex), &alloc_vertices[6]);
+        xgux_set_attrib_pointer(XGU_VERTEX_ARRAY, XGU_FLOAT, 3,
+                           sizeof(Vertex), &alloc_vertices[0]);
+        xgux_set_attrib_pointer(XGU_NORMAL_ARRAY, XGU_FLOAT, 3,
+                           sizeof(Vertex), &alloc_vertices[3]);
+        xgux_set_attrib_pointer(XGU_TEXCOORD0_ARRAY, XGU_FLOAT, 2, //FIXME: Bug in XQEMU nv2a_regs.h
+                           sizeof(Vertex), &alloc_vertices[6]);
 
         /* Begin drawing triangles */
-        draw_indices();
+        xgux_draw_elements16(XGU_TRIANGLES, indices, num_indices * 2);
 
         /* Draw some text on the screen */
         pb_print("Mesh Demo\n");
@@ -296,19 +289,17 @@ static void init_shader(void)
     p = pb_begin();
 
     /* Set run address of shader */
-    p = pb_push1(p, NV097_SET_TRANSFORM_PROGRAM_START, 0);
+    p = xgu_set_transform_program_start(p, 0);
 
     /* Set execution mode */
-    p = pb_push1(p, NV097_SET_TRANSFORM_EXECUTION_MODE,
-                 MASK(NV097_SET_TRANSFORM_EXECUTION_MODE_MODE, NV097_SET_TRANSFORM_EXECUTION_MODE_MODE_PROGRAM)
-                 | MASK(NV097_SET_TRANSFORM_EXECUTION_MODE_RANGE_MODE, NV097_SET_TRANSFORM_EXECUTION_MODE_RANGE_MODE_PRIV));
+    p = xgu_set_transform_execution_mode(p, XGU_PROGRAM, XGU_RANGE_MODE_PRIVATE);
 
-    p = pb_push1(p, NV097_SET_TRANSFORM_PROGRAM_CXT_WRITE_EN, 0);
+    p = xgu_set_transform_program_cxt_write_enable(p, 0);
     pb_end(p);
 
     /* Set cursor and begin copying program */
     p = pb_begin();
-    p = pb_push1(p, NV097_SET_TRANSFORM_PROGRAM_LOAD, 0);
+    p = xgu_set_transform_program_load(p, 0);
     pb_end(p);
 
     /* Copy program instructions (16-bytes each) */
@@ -334,47 +325,4 @@ static void init_textures(void)
     texture.pitch = texture.width*4;
     texture.addr = MmAllocateContiguousMemoryEx(texture.pitch*texture.height, 0, MAXRAM, 0, 0x404);
     memcpy(texture.addr, texture_rgba, sizeof(texture_rgba));
-}
-
-/* Set an attribute pointer */
-static void set_attrib_pointer(unsigned int index, unsigned int format, unsigned int size, unsigned int stride, const void* data)
-{
-    uint32_t *p = pb_begin();
-    p = pb_push1(p, NV097_SET_VERTEX_DATA_ARRAY_FORMAT + index*4,
-        MASK(NV097_SET_VERTEX_DATA_ARRAY_FORMAT_TYPE, format) | \
-        MASK(NV097_SET_VERTEX_DATA_ARRAY_FORMAT_SIZE, size) | \
-        MASK(NV097_SET_VERTEX_DATA_ARRAY_FORMAT_STRIDE, stride));
-    p = pb_push1(p, NV097_SET_VERTEX_DATA_ARRAY_OFFSET + index*4, (uint32_t)data & 0x03ffffff);
-    pb_end(p);
-}
-
-/* Draw vertices using the index method */
-static void draw_indices(void)
-{
-    /* Indices are already packed as dwords, so we simply send them out in batches */
-    #define MIN(a,b) ((a)<(b)?(a):(b))
-    #define MAX_BATCH 120
-
-    uint32_t *p;
-    unsigned int i, num_this_batch;
-
-    for (i = 0; i < num_indices; ) {
-        /* Determine how many can be sent in this batch */
-        num_this_batch = MIN(MAX_BATCH, num_indices-i);
-
-        /* Begin by stating what these indices are and how many we'll send */
-        p = pb_begin();
-        p = pb_push1(p, NV097_SET_BEGIN_END, TRIANGLES);
-        pb_push(p++, 0x40000000|NV20_TCL_PRIMITIVE_3D_INDEX_DATA, num_this_batch);
-
-        /* Send the indices */
-        memcpy(p, &indices[i], num_this_batch * sizeof(uint32_t));
-        p += num_this_batch;
-
-        /* Finished with this batch */
-        p = pb_push1(p, NV097_SET_BEGIN_END, NV097_SET_BEGIN_END_OP_END);
-        pb_end(p);
-
-        i += num_this_batch;
-    }
 }

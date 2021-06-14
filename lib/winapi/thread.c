@@ -5,8 +5,9 @@
 #include <process.h>
 #include <fibersapi_internal_.h>
 #include <winbase.h>
-#include <pdclib/_PDCLIB_xbox_tls.h>
 #include <xboxkrnl/xboxkrnl.h>
+
+extern const IMAGE_TLS_DIRECTORY_32 _tls_used;
 
 uintptr_t __cdecl _beginthreadex (void *_Security, unsigned _StackSize, _beginthreadex_proc_type _StartAddress, void *_ArgList, unsigned _InitFlag, unsigned *_ThrdAddr)
 {
@@ -61,9 +62,7 @@ HANDLE CreateThread (LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSiz
     HANDLE handle;
 
     if (dwStackSize == 0) {
-        // FIXME: We're directly reading the XBE StackCommit field here.
-        //        A cleaner way with proper structs would be nice.
-        dwStackSize = *((SIZE_T *)0x00010130);
+        dwStackSize = CURRENT_XBE_HEADER->SizeOfStack;
     }
 
     ULONG tlssize;
